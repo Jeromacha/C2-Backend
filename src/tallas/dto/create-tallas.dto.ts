@@ -1,14 +1,14 @@
-import { IsNumber, Min } from 'class-validator';
+// src/tallas/dto/create-talla.dto.ts
+import { IsNumber, IsInt, Min } from 'class-validator';
 
 export class CreateTallaDto {
-  @IsNumber({}, { message: 'talla debe ser un número' })
-  @Min(20, { message: 'talla no puede ser menor a 20' })
+  @IsNumber()
   talla: number;
 
-  @IsNumber({}, { message: 'cantidad debe ser un número' })
-  @Min(0, { message: 'cantidad no puede ser menor a 0' })
+  @IsInt()
+  @Min(0)
   cantidad: number;
 
-  @IsNumber({}, { message: 'zapatoId debe ser un número' })
-  zapatoId: number;
+  @IsInt()
+  zapato_id: number;
 }

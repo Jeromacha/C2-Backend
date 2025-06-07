@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Zapato } from '../../zapatos/entities/zapato.entity';
 
-@Entity({ name: 'Tallas' })
+@Entity({ name: 'tallas' })
 export class Talla {
   @PrimaryColumn('float')
   talla: number;

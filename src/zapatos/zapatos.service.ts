@@ -1,31 +1,48 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Zapato } from './entities/zapato.entity';
-import { Categoria } from '../categorias/entities/categoria.entity';
 import { CreateZapatoDto } from './dto/create-zapatos.dto';
+import { Categoria } from '../categorias/entities/categoria.entity';
 
 @Injectable()
-export class ZapatoService {
+export class ZapatosService {
   constructor(
-    @InjectRepository(Zapato) private zapatoRepo: Repository<Zapato>,
-    @InjectRepository(Categoria) private categoriaRepo: Repository<Categoria>,
+    @InjectRepository(Zapato) private readonly zapatoRepo: Repository<Zapato>,
+    @InjectRepository(Categoria) private readonly categoriaRepo: Repository<Categoria>,
   ) {}
 
-  async create(createZapatoDto: CreateZapatoDto): Promise<Zapato> {
-    const categoria = await this.categoriaRepo.findOneBy({ nombre: createZapatoDto.categoriaNombre });
+  async create(dto: CreateZapatoDto): Promise<Zapato> {
+     console.log('DTO recibido:', dto); 
+    const categoria = await this.categoriaRepo.findOneBy({ nombre: dto.categoriaNombre });
     if (!categoria) {
-      throw new NotFoundException(`Categoría ${createZapatoDto.categoriaNombre} no encontrada`);
+      throw new NotFoundException(`Categoría '${dto.categoriaNombre}' no encontrada.`);
     }
 
     const zapato = this.zapatoRepo.create({
-      nombre: createZapatoDto.nombre,
-      precio: createZapatoDto.precio,
-      categoria,
+      nombre: dto.nombre,
+      ubicacion: dto.ubicacion,
+      imagenUrl: dto.imagenUrl,
+      precio: dto.precio,
+      categoriaNombre: dto.categoriaNombre,
+      categoria: categoria,
     });
 
-    return this.zapatoRepo.save(zapato);
+    return await this.zapatoRepo.save(zapato);
   }
 
-  // Similar para update...
+  async findAll(): Promise<Zapato[]> {
+    return this.zapatoRepo.find({ relations: ['tallas'] });
+  }
+
+  async findOne(id: number): Promise<Zapato> {
+    const zapato = await this.zapatoRepo.findOne({ where: { id }, relations: ['tallas'] });
+    if (!zapato) throw new NotFoundException(`Zapato con ID ${id} no encontrado.`);
+    return zapato;
+  }
+
+  async remove(id: number): Promise<void> {
+    const result = await this.zapatoRepo.delete(id);
+    if (result.affected === 0) throw new NotFoundException(`Zapato con ID ${id} no encontrado.`);
+  }
 }

@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 import { Zapato } from '../../zapatos/entities/zapato.entity';
 
-@Entity('Categorias')
+@Entity('categorias')
 export class Categoria {
   @PrimaryColumn()
   nombre: string;

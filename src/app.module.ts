@@ -2,27 +2,24 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-// Importa aquí tus módulos, por ejemplo:
-import { ZapatoModule } from './zapatos/zapatos.module';
+// Módulos del proyecto
+import { ZapatosModule } from './zapatos/zapatos.module';
 import { CategoriasModule } from './categorias/categorias.module';
 import { TallasModule } from './tallas/tallas.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // carga .env globalmente
-
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
       ssl: {
-        rejectUnauthorized: false, // para que no falle con certificados auto firmados
+        rejectUnauthorized: false,
       },
       autoLoadEntities: true,
-      synchronize: true, // solo para desarrollo
+      synchronize: true, // Solo para desarrollo
     }),
-
-    // Tus módulos
-    ZapatoModule,
+    ZapatosModule,
     CategoriasModule,
     TallasModule,
   ],
