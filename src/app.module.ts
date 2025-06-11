@@ -6,6 +6,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ZapatosModule } from './zapatos/zapatos.module';
 import { CategoriasModule } from './categorias/categorias.module';
 import { TallasModule } from './tallas/tallas.module';
+import { CategoriasRopaModule } from './categorias-ropa/categorias-ropa.module';
+import { RopaModule } from './ropa/ropa.module';
+import { TallasRopaModule } from './tallas-ropa/tallas-ropa.module';
 
 @Module({
   imports: [
@@ -17,11 +20,14 @@ import { TallasModule } from './tallas/tallas.module';
         rejectUnauthorized: false,
       },
       autoLoadEntities: true,
-      synchronize: true, // Solo para desarrollo
+      synchronize: true, 
     }),
     ZapatosModule,
     CategoriasModule,
     TallasModule,
+    CategoriasRopaModule,
+    RopaModule,
+    TallasRopaModule,
   ],
 })
 export class AppModule {}
