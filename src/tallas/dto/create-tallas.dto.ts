@@ -1,14 +1,18 @@
 // src/tallas/dto/create-talla.dto.ts
-import { IsNumber, IsInt, Min } from 'class-validator';
+import { IsInt, IsPositive, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateTallaDto {
-  @IsNumber()
+  @Type(() => Number)
+  @IsPositive()
   talla: number;
 
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   cantidad: number;
 
+  @Type(() => Number)
   @IsInt()
   zapato_id: number;
 }

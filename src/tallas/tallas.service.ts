@@ -13,10 +13,21 @@ export class TallasService {
     private readonly tallaRepository: Repository<Talla>,
   ) {}
 
-  async create(createTallaDto: CreateTallaDto): Promise<Talla> {
-    const talla = this.tallaRepository.create(createTallaDto);
-    return await this.tallaRepository.save(talla);
+async create(createTallaDto: CreateTallaDto): Promise<Talla> {
+  // Validación adicional opcional si quieres prevenir errores
+  const tallaExistente = await this.tallaRepository.findOneBy({
+    talla: createTallaDto.talla,
+    zapato_id: createTallaDto.zapato_id,
+  });
+
+  if (tallaExistente) {
+    throw new Error(`Ya existe una entrada para la talla ${createTallaDto.talla} del zapato ${createTallaDto.zapato_id}`);
   }
+
+  const talla = this.tallaRepository.create(createTallaDto);
+  return await this.tallaRepository.save(talla);
+}
+
 
   async findAll(): Promise<Talla[]> {
     return this.tallaRepository.find({ relations: ['zapato'] });
@@ -45,4 +56,5 @@ export class TallasService {
     const tallaExistente = await this.findOne(talla, zapato_id);
     await this.tallaRepository.remove(tallaExistente);
   }
+  
 }

@@ -1,7 +1,9 @@
-// src/zapatos/dto/create-zapatos.dto.ts
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsInt } from 'class-validator';
 
 export class CreateZapatoDto {
+  @IsInt()
+  id: number;
+
   @IsString()
   @IsNotEmpty()
   nombre: string;
@@ -20,4 +22,8 @@ export class CreateZapatoDto {
   @IsString()
   @IsNotEmpty()
   categoriaNombre: string;
+
+  @IsString()
+  @IsOptional()
+  observaciones?: string;
 }

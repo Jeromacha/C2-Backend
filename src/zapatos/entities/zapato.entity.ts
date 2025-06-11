@@ -1,18 +1,18 @@
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn
+  JoinColumn,
 } from 'typeorm';
 import { Categoria } from '../../categorias/entities/categoria.entity';
 import { Talla } from '../../tallas/entities/tallas.entity';
 
 @Entity({ name: 'zapatos' })
 export class Zapato {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  id: number; // ahora lo defines manualmente
 
   @Column()
   nombre: string;
@@ -28,6 +28,9 @@ export class Zapato {
 
   @Column()
   categoriaNombre: string;
+
+  @Column({ nullable: true })
+  observaciones: string;
 
   @ManyToOne(() => Categoria, categoria => categoria.zapatos, { eager: true })
   @JoinColumn({ name: 'categoriaNombre', referencedColumnName: 'nombre' })

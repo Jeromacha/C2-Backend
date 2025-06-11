@@ -16,17 +16,23 @@ export class ZapatosService {
   ) {}
 
   async create(dto: CreateZapatoDto): Promise<Zapato> {
-    const categoria = await this.categoriaRepo.findOneBy({ nombre: dto.categoriaNombre });
+    const categoria = await this.categoriaRepo.findOneBy({
+      nombre: dto.categoriaNombre,
+    });
     if (!categoria) {
-      throw new NotFoundException(`Categoría '${dto.categoriaNombre}' no encontrada.`);
+      throw new NotFoundException(
+        `Categoría '${dto.categoriaNombre}' no encontrada.`,
+      );
     }
 
     const zapato = this.zapatoRepo.create({
+      id: dto.id,
       nombre: dto.nombre,
       ubicacion: dto.ubicacion,
       imagen_url: dto.imagen_url,
       precio: dto.precio,
       categoriaNombre: dto.categoriaNombre,
+      observaciones: dto.observaciones,
       categoria: categoria,
     });
 
@@ -42,7 +48,8 @@ export class ZapatosService {
       where: { id },
       relations: ['tallas'],
     });
-    if (!zapato) throw new NotFoundException(`Zapato con ID ${id} no encontrado.`);
+    if (!zapato)
+      throw new NotFoundException(`Zapato con ID ${id} no encontrado.`);
     return zapato;
   }
 
