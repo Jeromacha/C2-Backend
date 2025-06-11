@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn
+} from 'typeorm';
 import { Categoria } from '../../categorias/entities/categoria.entity';
 import { Talla } from '../../tallas/entities/tallas.entity';
 
@@ -14,7 +21,7 @@ export class Zapato {
   ubicacion: string;
 
   @Column({ name: 'imagen_url' })
-  imagenUrl: string;
+  imagen_url: string;
 
   @Column('decimal')
   precio: number;
