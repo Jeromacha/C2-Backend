@@ -9,6 +9,7 @@ import { TallasModule } from './tallas/tallas.module';
 import { CategoriasRopaModule } from './categorias-ropa/categorias-ropa.module';
 import { RopaModule } from './ropa/ropa.module';
 import { TallasRopaModule } from './tallas-ropa/tallas-ropa.module';
+import { UsuariosModule } from './usuario/usuarios.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TallasRopaModule } from './tallas-ropa/tallas-ropa.module';
     CategoriasRopaModule,
     RopaModule,
     TallasRopaModule,
+    UsuariosModule,
   ],
 })
 export class AppModule {}
