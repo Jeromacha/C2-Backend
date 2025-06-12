@@ -10,6 +10,7 @@ import { CategoriasRopaModule } from './categorias-ropa/categorias-ropa.module';
 import { RopaModule } from './ropa/ropa.module';
 import { TallasRopaModule } from './tallas-ropa/tallas-ropa.module';
 import { UsuariosModule } from './usuario/usuarios.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsuariosModule } from './usuario/usuarios.module';
     RopaModule,
     TallasRopaModule,
     UsuariosModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
