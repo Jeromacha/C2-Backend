@@ -13,6 +13,7 @@ import { UsuariosModule } from './usuario/usuarios.module';
 import { AuthModule } from './auth/auth.module';
 import { VentasModule } from './ventas/ventas.module';
 import { EntradaMercanciaModule } from './entrada-mercancia/entrada-mercancia.module';
+import { DevolucionesModule } from './devoluciones/devoluciones.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { EntradaMercanciaModule } from './entrada-mercancia/entrada-mercancia.mo
     AuthModule,
     VentasModule,
     EntradaMercanciaModule,
+    DevolucionesModule
   ],
 })
 export class AppModule {}
