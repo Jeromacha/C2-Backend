@@ -11,6 +11,7 @@ import { RopaModule } from './ropa/ropa.module';
 import { TallasRopaModule } from './tallas-ropa/tallas-ropa.module';
 import { UsuariosModule } from './usuario/usuarios.module';
 import { AuthModule } from './auth/auth.module';
+import { VentasModule } from './ventas/ventas.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AuthModule } from './auth/auth.module';
     TallasRopaModule,
     UsuariosModule,
     AuthModule,
+    VentasModule,
   ],
 })
 export class AppModule {}
