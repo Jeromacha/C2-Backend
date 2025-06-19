@@ -7,12 +7,18 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true,           // Transforma los tipos (por ejemplo, string a number)
-      whitelist: true,           // Elimina propiedades que no están en los DTOs
-      forbidNonWhitelisted: true, // Lanza error si se envían propiedades no permitidas
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
     }),
   );
 
-  await app.listen(3000);
+  // ✅ Permitir CORS desde el frontend en localhost:3000
+  app.enableCors({
+    origin: 'http://localhost:3000',
+  });
+
+  // ✅ Cambiar puerto del backend a 3001
+  await app.listen(3001);
 }
 bootstrap();
