@@ -11,6 +11,7 @@ import { Usuario } from '../usuario/entities/usuario.entity';
 import { Talla } from '../tallas/entities/tallas.entity';
 import { TallaRopa } from '../tallas-ropa/entities/talla-ropa.entity';
 import { Zapato } from '../zapatos/entities/zapato.entity';
+import { Bolso } from '../bolsos/entities/bolso.entity';
 
 @Injectable()
 export class VentasService {
@@ -25,6 +26,8 @@ export class VentasService {
     private readonly tallaRopaRepo: Repository<TallaRopa>,
     @InjectRepository(Zapato)
     private readonly zapatoRepo: Repository<Zapato>,
+    @InjectRepository(Bolso)
+    private readonly bolsoRepo: Repository<Bolso>,
   ) {}
 
   async create(dto: CreateVentaDto): Promise<Venta> {
@@ -58,7 +61,7 @@ export class VentasService {
       if (!zapato) throw new NotFoundException('Zapato no encontrado');
 
       dto.nombre_producto = zapato.nombre;
-      
+
     } else if (dto.tipo === TipoProducto.ROPA) {
       if (!dto.nombre_producto || !dto.color)
         throw new BadRequestException(
@@ -80,13 +83,27 @@ export class VentasService {
 
       tallaRopa.cantidad -= 1;
       await this.tallaRopaRepo.save(tallaRopa);
+
+    } else if (dto.tipo === TipoProducto.BOLSO) {
+      if (!dto.bolso_id)
+        throw new BadRequestException('bolso_id es obligatorio para tipo bolso');
+
+      const bolso = await this.bolsoRepo.findOne({
+        where: { id: dto.bolso_id },
+      });
+
+      if (!bolso) throw new NotFoundException('Bolso no encontrado');
+
+      dto.nombre_producto = bolso.nombre;
+      dto.color = bolso.color;
+
     } else {
       throw new BadRequestException('Tipo de producto inválido');
     }
 
     const venta = this.ventaRepo.create({
       ...dto,
-      producto: dto.nombre_producto, // ← necesario para que no sea null
+      producto: dto.nombre_producto,
       cantidad: 1,
       usuario,
     });

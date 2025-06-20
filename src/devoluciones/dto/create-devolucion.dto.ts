@@ -4,6 +4,7 @@ import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-valida
 export enum TipoProducto {
   ZAPATO = 'zapato',
   ROPA = 'ropa',
+  BOLSO = 'bolso', 
 }
 
 export class CreateDevolucionDto {

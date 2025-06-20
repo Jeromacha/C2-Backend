@@ -1,4 +1,3 @@
-// src/entrada-mercancia/entities/entrada-mercancia.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -27,7 +26,10 @@ export class EntradaMercancia {
   @Column({ nullable: true })
   ropa_color: string;
 
-  @Column()
+  @Column({ nullable: true })
+  bolso_id: string;
+
+  @Column({ nullable: true })
   talla: string;
 
   @Column({ type: 'int' })

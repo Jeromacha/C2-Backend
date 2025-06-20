@@ -1,4 +1,3 @@
-// src/entrada-mercancia/entrada-mercancia.service.ts
 import {
   Injectable,
   BadRequestException,
@@ -12,6 +11,7 @@ import { TipoProducto } from '../ventas/dto/create-venta.dto';
 import { Usuario } from '../usuario/entities/usuario.entity';
 import { Talla } from '../tallas/entities/tallas.entity';
 import { TallaRopa } from '../tallas-ropa/entities/talla-ropa.entity';
+import { Bolso } from '../bolsos/entities/bolso.entity';
 
 @Injectable()
 export class EntradaMercanciaService {
@@ -24,6 +24,8 @@ export class EntradaMercanciaService {
     private readonly tallaZapatoRepo: Repository<Talla>,
     @InjectRepository(TallaRopa)
     private readonly tallaRopaRepo: Repository<TallaRopa>,
+    @InjectRepository(Bolso)
+    private readonly bolsoRepo: Repository<Bolso>,
   ) {}
 
   async create(dto: CreateEntradaMercanciaDto): Promise<EntradaMercancia> {
@@ -46,6 +48,7 @@ export class EntradaMercanciaService {
 
       tallaZapato.cantidad += dto.cantidad;
       await this.tallaZapatoRepo.save(tallaZapato);
+
     } else if (dto.tipo === TipoProducto.ROPA) {
       if (!dto.ropa_nombre || !dto.ropa_color) {
         throw new BadRequestException('ropa_nombre y ropa_color son obligatorios para tipo ropa');
@@ -63,6 +66,17 @@ export class EntradaMercanciaService {
 
       tallaRopa.cantidad += dto.cantidad;
       await this.tallaRopaRepo.save(tallaRopa);
+
+    } else if (dto.tipo === TipoProducto.BOLSO) {
+      if (!dto.bolso_id) {
+        throw new BadRequestException('bolso_id es obligatorio para tipo bolso');
+      }
+
+      const bolso = await this.bolsoRepo.findOne({ where: { id: dto.bolso_id } });
+      if (!bolso) throw new NotFoundException('Bolso no encontrado');
+
+      bolso.cantidad += dto.cantidad;
+      await this.bolsoRepo.save(bolso);
     } else {
       throw new BadRequestException('Tipo de producto inválido');
     }

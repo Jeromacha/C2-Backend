@@ -14,7 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { VentasModule } from './ventas/ventas.module';
 import { EntradaMercanciaModule } from './entrada-mercancia/entrada-mercancia.module';
 import { DevolucionesModule } from './devoluciones/devoluciones.module';
-
+import { BolsosModule } from './bolsos/bolsos.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -37,7 +37,8 @@ import { DevolucionesModule } from './devoluciones/devoluciones.module';
     AuthModule,
     VentasModule,
     EntradaMercanciaModule,
-    DevolucionesModule
+    DevolucionesModule,
+    BolsosModule,
   ],
 })
 export class AppModule {}

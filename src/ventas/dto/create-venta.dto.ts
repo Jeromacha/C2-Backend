@@ -1,32 +1,30 @@
-// src/ventas/dto/create-venta.dto.ts
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export enum TipoProducto {
   ZAPATO = 'zapato',
   ROPA = 'ropa',
+  BOLSO = 'bolso',
 }
 
 export class CreateVentaDto {
   @IsEnum(TipoProducto)
   tipo: TipoProducto;
 
-  // Solo obligatorio si tipo === 'zapato'
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
   zapato_id?: number;
 
-  // Solo obligatorio si tipo === 'ropa'
-  @IsString()
   @IsOptional()
+  @IsString()
   nombre_producto?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   color?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  talla: string;
+  talla?: string; // solo ropa/zapato
 
   @IsNumber()
   @IsNotEmpty()
@@ -35,4 +33,9 @@ export class CreateVentaDto {
   @IsNumber()
   @IsNotEmpty()
   usuario_id: number;
+
+  // Nuevo para bolso
+  @IsOptional()
+  @IsString()
+  bolso_id?: string;
 }
