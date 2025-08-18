@@ -15,17 +15,20 @@ import { VentasModule } from './ventas/ventas.module';
 import { EntradaMercanciaModule } from './entrada-mercancia/entrada-mercancia.module';
 import { DevolucionesModule } from './devoluciones/devoluciones.module';
 import { BolsosModule } from './bolsos/bolsos.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      url: process.env.DATABASE_URL, // URL completa desde .env
       autoLoadEntities: true,
-      synchronize: true, 
+      synchronize: true, // ⚠️ solo en desarrollo, no en producción
+      extra: {
+        ssl: {
+          rejectUnauthorized: false, // necesario para Supabase
+        },
+      },
     }),
     ZapatosModule,
     CategoriasModule,

@@ -8,9 +8,9 @@ import { Usuario } from '../usuario/entities/usuario.entity';
 import { Talla } from '../tallas/entities/tallas.entity';
 import { TallaRopa } from '../tallas-ropa/entities/talla-ropa.entity';
 import { Zapato } from '../zapatos/entities/zapato.entity';
-
+import { Bolso } from 'src/bolsos/entities/bolso.entity';
 @Module({
-  imports: [TypeOrmModule.forFeature([Venta, Usuario, Talla, TallaRopa, Zapato])],
+  imports: [TypeOrmModule.forFeature([Venta, Usuario, Talla, TallaRopa, Zapato, Bolso])],
   controllers: [VentasController],
   providers: [VentasService],
 })

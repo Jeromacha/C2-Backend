@@ -7,9 +7,12 @@ import { EntradaMercanciaController } from './entrada-mercancia.controller';
 import { Usuario } from '../usuario/entities/usuario.entity';
 import { Talla } from '../tallas/entities/tallas.entity';
 import { TallaRopa } from '../tallas-ropa/entities/talla-ropa.entity';
+import { Bolso } from '../bolsos/entities/bolso.entity'; // 👈 importar entidad bolso
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EntradaMercancia, Usuario, Talla, TallaRopa])],
+  imports: [
+    TypeOrmModule.forFeature([EntradaMercancia, Usuario, Talla, TallaRopa, Bolso]), // 👈 agregar Bolso aquí
+  ],
   controllers: [EntradaMercanciaController],
   providers: [EntradaMercanciaService],
 })

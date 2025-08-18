@@ -16,6 +16,10 @@ export class CreateBolsoDto {
   @IsNumber()
   precio: number;
 
+  @IsNumber()
+  @IsNotEmpty()
+  cantidad: number;   // 👈 agregado obligatorio en el DTO
+
   @IsOptional()
   @IsString()
   observaciones?: string;
