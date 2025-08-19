@@ -1,7 +1,7 @@
-// src/ventas/ventas.controller.ts
-import { Controller, Post, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Patch, Param, Delete } from '@nestjs/common';
 import { VentasService } from './ventas.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
+import { UpdateVentaDto } from './dto/update-venta.dto';
 
 @Controller('ventas')
 export class VentasController {
@@ -23,13 +23,20 @@ export class VentasController {
   }
 
   @Get('ganancias')
-  async getGanancias(
-    @Query('start') start?: string,
-    @Query('end') end?: string,
-  ) {
+  async getGanancias(@Query('start') start?: string, @Query('end') end?: string) {
     const startDate = start ? new Date(start) : undefined;
     const endDate = end ? new Date(end) : undefined;
     const total = await this.ventasService.calcularGanancias(startDate, endDate);
     return { total };
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateVentaDto) {
+    return this.ventasService.update(+id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.ventasService.remove(+id);
   }
 }

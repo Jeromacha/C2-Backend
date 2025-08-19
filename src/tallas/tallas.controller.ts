@@ -1,5 +1,14 @@
-// src/tallas/tallas.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseFloatPipe, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseFloatPipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { TallasService } from './tallas.service';
 import { CreateTallaDto } from './dto/create-tallas.dto';
 import { UpdateTallaDto } from './dto/update-tallas.dto';

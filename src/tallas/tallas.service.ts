@@ -1,5 +1,4 @@
-// src/tallas/tallas.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Talla } from './entities/tallas.entity';
@@ -13,21 +12,21 @@ export class TallasService {
     private readonly tallaRepository: Repository<Talla>,
   ) {}
 
-async create(createTallaDto: CreateTallaDto): Promise<Talla> {
-  // Validación adicional opcional si quieres prevenir errores
-  const tallaExistente = await this.tallaRepository.findOneBy({
-    talla: createTallaDto.talla,
-    zapato_id: createTallaDto.zapato_id,
-  });
+  async create(createTallaDto: CreateTallaDto): Promise<Talla> {
+    const existente = await this.tallaRepository.findOneBy({
+      talla: createTallaDto.talla,
+      zapato_id: createTallaDto.zapato_id,
+    });
 
-  if (tallaExistente) {
-    throw new Error(`Ya existe una entrada para la talla ${createTallaDto.talla} del zapato ${createTallaDto.zapato_id}`);
+    if (existente) {
+      throw new ConflictException(
+        `Ya existe talla ${createTallaDto.talla} para el zapato ${createTallaDto.zapato_id}`,
+      );
+    }
+
+    const talla = this.tallaRepository.create(createTallaDto);
+    return await this.tallaRepository.save(talla);
   }
-
-  const talla = this.tallaRepository.create(createTallaDto);
-  return await this.tallaRepository.save(talla);
-}
-
 
   async findAll(): Promise<Talla[]> {
     return this.tallaRepository.find({ relations: ['zapato'] });
@@ -40,21 +39,22 @@ async create(createTallaDto: CreateTallaDto): Promise<Talla> {
     });
 
     if (!result) {
-      throw new NotFoundException(`Talla ${talla} para zapato ${zapato_id} no encontrada`);
+      throw new NotFoundException(
+        `Talla ${talla} para zapato ${zapato_id} no encontrada`,
+      );
     }
 
     return result;
   }
 
   async update(talla: number, zapato_id: number, updateDto: UpdateTallaDto): Promise<Talla> {
-    const tallaExistente = await this.findOne(talla, zapato_id);
-    Object.assign(tallaExistente, updateDto);
-    return this.tallaRepository.save(tallaExistente);
+    const existente = await this.findOne(talla, zapato_id);
+    Object.assign(existente, updateDto);
+    return this.tallaRepository.save(existente);
   }
 
   async remove(talla: number, zapato_id: number): Promise<void> {
-    const tallaExistente = await this.findOne(talla, zapato_id);
-    await this.tallaRepository.remove(tallaExistente);
+    const existente = await this.findOne(talla, zapato_id);
+    await this.tallaRepository.remove(existente);
   }
-  
 }

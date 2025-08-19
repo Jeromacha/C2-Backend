@@ -1,17 +1,16 @@
-// src/tallas-ropa/tallas-ropa.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TallaRopa } from './entities/talla-ropa.entity';
 import { Ropa } from '../ropa/entities/ropa.entity';
 import { CreateTallaRopaDto } from './dto/create-talla-ropa.dto';
+import { UpdateTallaRopaDto } from './dto/update-talla-ropa.dto';
 
 @Injectable()
 export class TallasRopaService {
   constructor(
     @InjectRepository(TallaRopa)
     private readonly tallaRepo: Repository<TallaRopa>,
-
     @InjectRepository(Ropa)
     private readonly ropaRepo: Repository<Ropa>,
   ) {}
@@ -20,9 +19,24 @@ export class TallasRopaService {
     const ropa = await this.ropaRepo.findOne({
       where: { nombre: dto.ropa_nombre, color: dto.ropa_color },
     });
-
     if (!ropa) {
-      throw new NotFoundException(`Ropa '${dto.ropa_nombre}' color '${dto.ropa_color}' no encontrada`);
+      throw new NotFoundException(
+        `Ropa '${dto.ropa_nombre}' color '${dto.ropa_color}' no encontrada`,
+      );
+    }
+
+    // Evitar duplicados (talla por prenda/color)
+    const existe = await this.tallaRepo.findOne({
+      where: {
+        talla: dto.talla,
+        ropa_nombre: dto.ropa_nombre,
+        ropa_color: dto.ropa_color,
+      },
+    });
+    if (existe) {
+      throw new ConflictException(
+        `Ya existe talla '${dto.talla}' para '${dto.ropa_nombre}' (${dto.ropa_color})`,
+      );
     }
 
     const talla = this.tallaRepo.create({
@@ -45,17 +59,22 @@ export class TallasRopaService {
       where: { talla, ropa_nombre, ropa_color },
       relations: ['ropa'],
     });
-
     if (!result) {
-      throw new NotFoundException(`Talla '${talla}' para prenda '${ropa_nombre}' color '${ropa_color}' no encontrada`);
+      throw new NotFoundException(
+        `Talla '${talla}' para prenda '${ropa_nombre}' color '${ropa_color}' no encontrada`,
+      );
     }
-
     return result;
   }
 
-  async update(talla: string, ropa_nombre: string, ropa_color: string, cantidad: number): Promise<TallaRopa> {
+  async update(
+    talla: string,
+    ropa_nombre: string,
+    ropa_color: string,
+    dto: UpdateTallaRopaDto,
+  ): Promise<TallaRopa> {
     const existing = await this.findOne(talla, ropa_nombre, ropa_color);
-    existing.cantidad = cantidad;
+    Object.assign(existing, dto);
     return this.tallaRepo.save(existing);
   }
 

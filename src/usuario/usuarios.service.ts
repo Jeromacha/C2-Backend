@@ -22,8 +22,10 @@ export class UsuariosService {
   }
 
   async findAll(): Promise<Usuario[]> {
-    return this.usuarioRepo.find();
-  }
+  const usuarios = await this.usuarioRepo.find();
+  // Ocultar contraseña por si acaso:
+  return usuarios.map(({ contraseña, ...resto }) => resto as Usuario);
+}
 
   async findOneByNombre(nombre: string): Promise<Usuario | undefined> {
     return this.usuarioRepo.findOne({ where: { nombre } });

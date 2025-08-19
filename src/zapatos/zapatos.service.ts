@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Zapato } from './entities/zapato.entity';
 import { CreateZapatoDto } from './dto/create-zapatos.dto';
+import { UpdateZapatoDto } from './dto/update-zapatos.dto';
 import { Categoria } from '../categorias/entities/categoria.entity';
 
 @Injectable()
@@ -33,7 +34,7 @@ export class ZapatosService {
       precio: dto.precio,
       categoriaNombre: dto.categoriaNombre,
       observaciones: dto.observaciones,
-      categoria: categoria,
+      categoria,
     });
 
     return await this.zapatoRepo.save(zapato);
@@ -48,9 +49,40 @@ export class ZapatosService {
       where: { id },
       relations: ['tallas'],
     });
-    if (!zapato)
+    if (!zapato) {
       throw new NotFoundException(`Zapato con ID ${id} no encontrado.`);
+    }
     return zapato;
+  }
+
+  async update(id: number, dto: UpdateZapatoDto): Promise<Zapato> {
+    const zapato = await this.zapatoRepo.findOne({ where: { id } });
+    if (!zapato) {
+      throw new NotFoundException(`Zapato con ID ${id} no encontrado.`);
+    }
+
+    // Si cambia la categoría, validar que exista
+    if (dto.categoriaNombre) {
+      const categoria = await this.categoriaRepo.findOneBy({
+        nombre: dto.categoriaNombre,
+      });
+      if (!categoria) {
+        throw new NotFoundException(
+          `Categoría '${dto.categoriaNombre}' no encontrada.`,
+        );
+      }
+      zapato.categoriaNombre = dto.categoriaNombre;
+      zapato.categoria = categoria;
+    }
+
+    // Asignar el resto de campos (sin tocar el id)
+    if (dto.nombre !== undefined) zapato.nombre = dto.nombre;
+    if (dto.ubicacion !== undefined) zapato.ubicacion = dto.ubicacion;
+    if (dto.imagen_url !== undefined) zapato.imagen_url = dto.imagen_url;
+    if (dto.precio !== undefined) zapato.precio = dto.precio;
+    if (dto.observaciones !== undefined) zapato.observaciones = dto.observaciones;
+
+    return this.zapatoRepo.save(zapato);
   }
 
   async remove(id: number): Promise<void> {

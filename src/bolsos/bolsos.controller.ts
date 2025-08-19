@@ -1,6 +1,7 @@
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Put, Delete } from '@nestjs/common';
 import { BolsosService } from './bolsos.service';
 import { CreateBolsoDto } from './dto/create-bolso.dto';
+import { UpdateBolsoDto } from './dto/update-bolso.dto';
 
 @Controller('bolsos')
 export class BolsosController {
@@ -19,5 +20,15 @@ export class BolsosController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.bolsosService.findOne(id);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateBolsoDto) {
+    return this.bolsosService.update(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.bolsosService.remove(id);
   }
 }

@@ -1,7 +1,7 @@
-// src/tallas-ropa/tallas-ropa.controller.ts
-import { Controller, Post, Get, Param, Body, Delete, Patch, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Delete, Patch } from '@nestjs/common';
 import { TallasRopaService } from './tallas-ropa.service';
 import { CreateTallaRopaDto } from './dto/create-talla-ropa.dto';
+import { UpdateTallaRopaDto } from './dto/update-talla-ropa.dto';
 
 @Controller('tallas-ropa')
 export class TallasRopaController {
@@ -26,14 +26,14 @@ export class TallasRopaController {
     return this.tallasRopaService.findOne(talla, ropa_nombre, ropa_color);
   }
 
-  @Patch(':talla/:ropa_nombre/:ropa_color/:cantidad')
+  @Patch(':talla/:ropa_nombre/:ropa_color')
   update(
     @Param('talla') talla: string,
     @Param('ropa_nombre') ropa_nombre: string,
     @Param('ropa_color') ropa_color: string,
-    @Param('cantidad', ParseIntPipe) cantidad: number,
+    @Body() dto: UpdateTallaRopaDto,
   ) {
-    return this.tallasRopaService.update(talla, ropa_nombre, ropa_color, cantidad);
+    return this.tallasRopaService.update(talla, ropa_nombre, ropa_color, dto);
   }
 
   @Delete(':talla/:ropa_nombre/:ropa_color')
