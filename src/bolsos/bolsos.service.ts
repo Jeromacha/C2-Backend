@@ -28,12 +28,14 @@ export class BolsosService {
   }
 
   async update(id: string, dto: UpdateBolsoDto): Promise<Bolso> {
-    const bolso = await this.bolsoRepo.findOne({ where: { id } });
-    if (!bolso) throw new NotFoundException('Bolso no encontrado');
+    const bolso = await this.findOne(id);
 
-    // No permitir cambiar el ID
-    const { ...rest } = dto;
-    const merged = this.bolsoRepo.merge(bolso, rest);
+    // No permitir cambiar el ID aunque viniera en el body
+    if ((dto as any).id) {
+      delete (dto as any).id;
+    }
+
+    const merged = this.bolsoRepo.merge(bolso, dto);
     return this.bolsoRepo.save(merged);
   }
 

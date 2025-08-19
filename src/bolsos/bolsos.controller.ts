@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, Delete /* Put */ } from '@nestjs/common';
 import { BolsosService } from './bolsos.service';
 import { CreateBolsoDto } from './dto/create-bolso.dto';
 import { UpdateBolsoDto } from './dto/update-bolso.dto';
@@ -22,10 +22,17 @@ export class BolsosController {
     return this.bolsosService.findOne(id);
   }
 
-  @Put(':id')
+  // Edición parcial (recomendado)
+  @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateBolsoDto) {
     return this.bolsosService.update(id, dto);
   }
+
+  // Si prefieres reemplazo total, descomenta este y comenta el @Patch:
+  // @Put(':id')
+  // replace(@Param('id') id: string, @Body() dto: UpdateBolsoDto) {
+  //   return this.bolsosService.update(id, dto);
+  // }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

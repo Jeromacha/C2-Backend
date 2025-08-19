@@ -1,4 +1,5 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateBolsoDto {
   @IsOptional()
@@ -10,6 +11,7 @@ export class UpdateBolsoDto {
   color?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   precio?: number;
 
@@ -18,6 +20,7 @@ export class UpdateBolsoDto {
   observaciones?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   cantidad?: number;
 }
