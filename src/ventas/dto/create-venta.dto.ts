@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsISO8601 } from "class-validator";
 
 export enum TipoProducto {
   ZAPATO = 'zapato',
@@ -9,6 +9,11 @@ export enum TipoProducto {
 export class CreateVentaDto {
   @IsEnum(TipoProducto)
   tipo: TipoProducto;
+
+  // NUEVO: fecha de la venta (YYYY-MM-DD o ISO8601)
+  @IsISO8601({ strict: false }, { message: 'fecha debe ser una fecha válida (YYYY-MM-DD o ISO8601)' })
+  @IsNotEmpty()
+  fecha: string;
 
   @IsOptional()
   @IsNumber()
