@@ -49,13 +49,21 @@ export class DevolucionesService {
     delta: number, // +1 sumar, -1 restar
   ) {
     const repo = qr.manager.getRepository(Talla);
-    const tallaZapato = await repo.findOne({
+    let tallaZapato = await repo.findOne({
       where: { zapato_id, talla },
       lock: { mode: 'pessimistic_write' },
     });
+
+    // Si no existe y el ajuste es positivo (recibir), creamos el registro
+    if (!tallaZapato && delta > 0) {
+      tallaZapato = repo.create({ zapato_id, talla, cantidad: 0 });
+    }
+
     if (!tallaZapato) {
+      // delta <= 0 y no existe => no se puede descontar algo inexistente
       throw new NotFoundException('Talla de zapato no encontrada');
     }
+
     const nueva = (tallaZapato.cantidad ?? 0) + delta;
     if (nueva < 0) {
       throw new BadRequestException('Stock de zapato no puede ser negativo');
@@ -72,13 +80,28 @@ export class DevolucionesService {
     delta: number,
   ) {
     const repo = qr.manager.getRepository(TallaRopa);
-    const tallaRopa = await repo.findOne({
+    let tallaRopa = await repo.findOne({
       where: { ropa_nombre, ropa_color, talla },
       lock: { mode: 'pessimistic_write' },
     });
-    if (!tallaRopa) {
-      throw new NotFoundException('Talla de ropa no encontrada');
+
+    // Si no existe y estamos recibiendo (+1), creamos el registro de talla con cantidad 0
+    if (!tallaRopa && delta > 0) {
+      tallaRopa = repo.create({
+        talla,
+        cantidad: 0,
+        ropa_nombre,
+        ropa_color,
+      });
     }
+
+    if (!tallaRopa) {
+      // delta <= 0 y no existe => no se puede descontar algo inexistente
+      throw new NotFoundException(
+        `Talla de ropa '${talla}' para '${ropa_nombre}' (${ropa_color}) no encontrada`,
+      );
+    }
+
     const nueva = (tallaRopa.cantidad ?? 0) + delta;
     if (nueva < 0) {
       throw new BadRequestException('Stock de ropa no puede ser negativo');
@@ -119,8 +142,8 @@ export class DevolucionesService {
 
     try {
       // 1) DESCONTAR lo ENTREGADO (pueden ser varios)
-      const entregados = splitList(dto.producto_entregado);           // p.ej. "blusa; blusa; blusa" o "12; 15"
-      const tallasEnt = splitList(dto.talla_entregada);               // p.ej. "S; M; L" o "38; 39"
+      const entregados = splitList(dto.producto_entregado);      // p.ej. "blusa; blusa" o "12; 15"
+      const tallasEnt = splitList(dto.talla_entregada);          // p.ej. "S; M" o "38; 39"
       const usarPerItem = entregados.length > 0 && entregados.length === tallasEnt.length;
 
       for (let i = 0; i < entregados.length; i++) {
@@ -159,7 +182,7 @@ export class DevolucionesService {
           if (bolsoId) {
             await this.adjustBolso(qr, item, -1);
             descontado = true;
-          } else if (tallaNorm.toLowerCase() === 'única') {
+          } else if (tallaNorm.toLowerCase() === 'única' || tallaNorm.toLowerCase() === 'unica') {
             const bolsoNombre = await repoBolso.findOne({
               where: { nombre: item },
               lock: { mode: 'pessimistic_read' },
@@ -171,12 +194,11 @@ export class DevolucionesService {
           }
         }
 
-        // Si no pudo inferir tipo, no rompe la transacción.
-        // Si prefieres forzar, descomenta la línea:
+        // Si no pudo inferir tipo, dejamos pasar (o puedes forzar error):
         // if (!descontado) throw new BadRequestException(`No se pudo identificar el producto entregado: "${item}"`);
       }
 
-      // 2) SUMAR el RECIBIDO (+1), como ya hacías
+      // 2) SUMAR el RECIBIDO (+1)
       if (dto.tipo === TipoProducto.ZAPATO) {
         const zapato_id = parseInt(dto.producto_recibido, 10);
         const tallaNum = parseFloat(dto.talla_recibida);
