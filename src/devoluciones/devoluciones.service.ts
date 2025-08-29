@@ -17,6 +17,14 @@ import { Talla } from '../tallas/entities/tallas.entity';
 import { TallaRopa } from '../tallas-ropa/entities/talla-ropa.entity';
 import { Bolso } from '../bolsos/entities/bolso.entity';
 
+function splitList(str?: string) {
+  if (!str) return [];
+  return String(str)
+    .split(/[;,/|·]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 @Injectable()
 export class DevolucionesService {
   constructor(
@@ -100,7 +108,7 @@ export class DevolucionesService {
     await repo.save(bolso);
   }
 
-  // ===== Create (suma stock del recibido) =====
+  // ===== Create: resta entregado(s) y suma recibido =====
   async create(dto: CreateDevolucionDto): Promise<Devolucion> {
     const usuario = await this.usuarioRepo.findOne({ where: { id: dto.usuario_id } });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
@@ -110,14 +118,75 @@ export class DevolucionesService {
     await qr.startTransaction();
 
     try {
-      // Aplica efecto de inventario (+1 del recibido)
+      // 1) DESCONTAR lo ENTREGADO (pueden ser varios)
+      const entregados = splitList(dto.producto_entregado);           // p.ej. "blusa; blusa; blusa" o "12; 15"
+      const tallasEnt = splitList(dto.talla_entregada);               // p.ej. "S; M; L" o "38; 39"
+      const usarPerItem = entregados.length > 0 && entregados.length === tallasEnt.length;
+
+      for (let i = 0; i < entregados.length; i++) {
+        const item = entregados[i];
+        const tallaTxt = (usarPerItem ? tallasEnt[i] : dto.talla_entregada) || '';
+        const tallaNorm = tallaTxt.toString().trim();
+        let descontado = false;
+
+        // a) Si es un id numérico => zapato
+        if (/^\d+$/.test(item) && tallaNorm) {
+          const zapatoId = parseInt(item, 10);
+          const tallaNum = parseFloat(tallaNorm);
+          await this.adjustZapato(qr, zapatoId, tallaNum, -1);
+          descontado = true;
+        }
+
+        // b) Si no, intenta ROPA por (nombre=item, color_entregado, talla)
+        if (!descontado && dto.color_entregado && tallaNorm) {
+          const existeRopa = await qr.manager.getRepository(TallaRopa).findOne({
+            where: { ropa_nombre: item, ropa_color: dto.color_entregado, talla: tallaNorm },
+            lock: { mode: 'pessimistic_read' },
+          });
+          if (existeRopa) {
+            await this.adjustRopa(qr, item, dto.color_entregado, tallaNorm, -1);
+            descontado = true;
+          }
+        }
+
+        // c) Si no, intenta BOLSO por id exacto; si talla es Única intenta por nombre
+        if (!descontado) {
+          const repoBolso = qr.manager.getRepository(Bolso);
+          const bolsoId = await repoBolso.findOne({
+            where: { id: item },
+            lock: { mode: 'pessimistic_read' },
+          });
+          if (bolsoId) {
+            await this.adjustBolso(qr, item, -1);
+            descontado = true;
+          } else if (tallaNorm.toLowerCase() === 'única') {
+            const bolsoNombre = await repoBolso.findOne({
+              where: { nombre: item },
+              lock: { mode: 'pessimistic_read' },
+            });
+            if (bolsoNombre) {
+              await this.adjustBolso(qr, bolsoNombre.id, -1);
+              descontado = true;
+            }
+          }
+        }
+
+        // Si no pudo inferir tipo, no rompe la transacción.
+        // Si prefieres forzar, descomenta la línea:
+        // if (!descontado) throw new BadRequestException(`No se pudo identificar el producto entregado: "${item}"`);
+      }
+
+      // 2) SUMAR el RECIBIDO (+1), como ya hacías
       if (dto.tipo === TipoProducto.ZAPATO) {
         const zapato_id = parseInt(dto.producto_recibido, 10);
         const tallaNum = parseFloat(dto.talla_recibida);
         await this.adjustZapato(qr, zapato_id, tallaNum, +1);
 
       } else if (dto.tipo === TipoProducto.ROPA) {
-        await this.adjustRopa(qr, dto.producto_recibido, dto.color_recibido!, dto.talla_recibida, +1);
+        if (!dto.color_recibido) {
+          throw new BadRequestException('color_recibido es requerido para ropa');
+        }
+        await this.adjustRopa(qr, dto.producto_recibido, dto.color_recibido, dto.talla_recibida, +1);
 
       } else if (dto.tipo === TipoProducto.BOLSO) {
         await this.adjustBolso(qr, dto.producto_recibido, +1);
