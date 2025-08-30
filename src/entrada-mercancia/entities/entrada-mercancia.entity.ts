@@ -1,3 +1,4 @@
+// src/entradas-mercancia/entities/entrada-mercancia.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -38,10 +39,12 @@ export class EntradaMercancia {
   @CreateDateColumn()
   fecha: Date;
 
-  @ManyToOne(() => Usuario, { onDelete: 'SET NULL' })
+  // ✅ Igual que en ventas: traer siempre el usuario (para poder mostrar usuario.nombre en el front)
+  //    Nota: como tienes onDelete: 'SET NULL', conviene que la FK sea nullable.
+  @ManyToOne(() => Usuario, { onDelete: 'SET NULL', eager: true })
   @JoinColumn({ name: 'usuario_id' })
   usuario: Usuario;
 
-  @Column()
+  @Column({ nullable: true })
   usuario_id: number;
 }
