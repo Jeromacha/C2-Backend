@@ -30,7 +30,7 @@ export class EntradaMercanciaService {
     private readonly dataSource: DataSource,
   ) {}
 
-  // ===== Helpers de ajuste de inventario (con bloqueo pesimista) =====
+  // ===== Helpers de ajuste de inventario (con creación si no existe) =====
   private async addZapato(
     qr: ReturnType<DataSource['createQueryRunner']>,
     zapato_id: number,
@@ -38,11 +38,26 @@ export class EntradaMercanciaService {
     cantidad: number,
   ) {
     const repo = qr.manager.getRepository(Talla);
-    const tallaZapato = await repo.findOne({
-      where: { zapato_id, talla },
+    const tallaNum = Number(talla);
+
+    // Intentamos leer con lock
+    let tallaZapato = await repo.findOne({
+      where: { zapato_id, talla: tallaNum },
       lock: { mode: 'pessimistic_write' },
     });
-    if (!tallaZapato) throw new NotFoundException('Talla de zapato no encontrada');
+
+    // Si no existe, la creamos con cantidad 0 (upsert)
+    if (!tallaZapato) {
+      tallaZapato = repo.create({ zapato_id, talla: tallaNum, cantidad: 0 });
+      await repo.save(tallaZapato);
+      // Opcional: relectura con lock si quieres ser ultra estricto
+      tallaZapato = await repo.findOne({
+        where: { zapato_id, talla: tallaNum },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!tallaZapato) throw new NotFoundException('No se pudo crear la talla de zapato');
+    }
+
     tallaZapato.cantidad = (tallaZapato.cantidad ?? 0) + cantidad;
     if (tallaZapato.cantidad < 0) {
       throw new BadRequestException('Stock de zapato no puede ser negativo');
@@ -58,11 +73,25 @@ export class EntradaMercanciaService {
     cantidad: number,
   ) {
     const repo = qr.manager.getRepository(TallaRopa);
-    const tallaRopa = await repo.findOne({
+
+    // Intentamos leer con lock
+    let tallaRopa = await repo.findOne({
       where: { ropa_nombre, ropa_color, talla },
       lock: { mode: 'pessimistic_write' },
     });
-    if (!tallaRopa) throw new NotFoundException('Talla de ropa no encontrada');
+
+    // Si no existe, la creamos con cantidad 0 (upsert)
+    if (!tallaRopa) {
+      tallaRopa = repo.create({ ropa_nombre, ropa_color, talla, cantidad: 0 });
+      await repo.save(tallaRopa);
+      // Opcional: relectura con lock
+      tallaRopa = await repo.findOne({
+        where: { ropa_nombre, ropa_color, talla },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!tallaRopa) throw new NotFoundException('No se pudo crear la talla de ropa');
+    }
+
     tallaRopa.cantidad = (tallaRopa.cantidad ?? 0) + cantidad;
     if (tallaRopa.cantidad < 0) {
       throw new BadRequestException('Stock de ropa no puede ser negativo');
@@ -159,7 +188,7 @@ export class EntradaMercanciaService {
     await qr.startTransaction();
 
     try {
-      // 1) Revertir efecto anterior (restar cantidad anterior según tipo anterior)
+      // 1) Revertir efecto anterior
       const cantidadAnterior = actual.cantidad ?? 0;
       if (cantidadAnterior > 0) {
         if (actual.tipo === TipoProducto.ZAPATO) {
@@ -197,7 +226,7 @@ export class EntradaMercanciaService {
         throw new BadRequestException('cantidad debe ser un número positivo');
       }
 
-      // 3) Aplicar nuevo efecto (sumar cantidad nueva según nuevo tipo)
+      // 3) Aplicar nuevo efecto
       if (actual.tipo === TipoProducto.ZAPATO) {
         if (!actual.zapato_id || actual.talla == null) {
           throw new BadRequestException('zapato_id y talla son obligatorios para tipo zapato');
@@ -231,7 +260,7 @@ export class EntradaMercanciaService {
     }
   }
 
-  // ===== DELETE: revierte efecto (resta la cantidad de esa entrada) y borra =====
+  // ===== DELETE: revierte efecto y borra =====
   async remove(id: number): Promise<{ affected: number }> {
     const actual = await this.entradaRepo.findOne({ where: { id } });
     if (!actual) throw new NotFoundException(`Entrada ${id} no encontrada`);
