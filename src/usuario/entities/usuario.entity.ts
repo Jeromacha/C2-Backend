@@ -23,4 +23,8 @@ export class Usuario {
   @Column({ type: 'enum', enum: RolUsuario })
   @IsEnum(RolUsuario, { message: 'El rol debe ser Admin o Empleado' })
   rol: RolUsuario;
+
+  // 👇 NUEVO: habilita/deshabilita acceso sin borrar al usuario
+  @Column({ default: true })
+  activo: boolean;
 }

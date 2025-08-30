@@ -21,7 +21,6 @@ import { RolUsuario } from './entities/usuario.entity';
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  // Solo Admin puede crear usuarios
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RolUsuario.ADMIN)
   @Post()
@@ -29,7 +28,6 @@ export class UsuariosController {
     return this.usuariosService.create(dto);
   }
 
-  // Listado (solo Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RolUsuario.ADMIN)
   @Get()
@@ -37,7 +35,6 @@ export class UsuariosController {
     return this.usuariosService.findAll();
   }
 
-  // Actualizar (solo Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RolUsuario.ADMIN)
   @Patch(':id')
@@ -48,7 +45,17 @@ export class UsuariosController {
     return this.usuariosService.update(id, dto);
   }
 
-  // Eliminar (solo Admin)
+  // ✅ NUEVO: activar/desactivar
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.ADMIN)
+  @Patch(':id/estado')
+  setEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { activo: boolean },
+  ) {
+    return this.usuariosService.setEstado(id, body.activo);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RolUsuario.ADMIN)
   @Delete(':id')

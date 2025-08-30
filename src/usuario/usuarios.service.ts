@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
@@ -22,10 +22,10 @@ export class UsuariosService {
   }
 
   async findAll(): Promise<Usuario[]> {
-  const usuarios = await this.usuarioRepo.find();
-  // Ocultar contraseña por si acaso:
-  return usuarios.map(({ contraseña, ...resto }) => resto as Usuario);
-}
+    const usuarios = await this.usuarioRepo.find();
+    // Ocultar contraseña por si acaso (pero sí devolvemos "activo")
+    return usuarios.map(({ contraseña, ...resto }) => resto as Usuario);
+  }
 
   async findOneByNombre(nombre: string): Promise<Usuario | undefined> {
     return this.usuarioRepo.findOne({ where: { nombre } });
@@ -45,10 +45,28 @@ export class UsuariosService {
     return this.usuarioRepo.save(usuario);
   }
 
-  async delete(id: number): Promise<void> {
-    const result = await this.usuarioRepo.delete(id);
-    if (result.affected === 0) {
+  // ✅ Nuevo: activar/desactivar usuario
+  async setEstado(id: number, activo: boolean): Promise<Usuario> {
+    const usuario = await this.usuarioRepo.findOne({ where: { id } });
+    if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
+    }
+    usuario.activo = !!activo;
+    return this.usuarioRepo.save(usuario);
+  }
+
+  async delete(id: number): Promise<void> {
+    try {
+      const result = await this.usuarioRepo.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+    } catch (e: any) {
+      // Postgres: violación de FK (p.ej. devoluciones/ventas/ingresos referencian al usuario)
+      if (e?.code === '23503') {
+        throw new BadRequestException('No se puede eliminar: el usuario tiene registros asociados (ventas/devoluciones/ingresos).');
+      }
+      throw e;
     }
   }
 }
