@@ -19,6 +19,7 @@ export class VentasController {
 
   @Get('rango-fechas')
   findByDateRange(@Query('start') start: string, @Query('end') end: string) {
+    // El front ya manda límites en UTC correctos (Z). Los pasamos tal cual.
     return this.ventasService.findByDateRange(new Date(start), new Date(end));
   }
 

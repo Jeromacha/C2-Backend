@@ -1,4 +1,3 @@
-// src/ventas/entities/venta.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Usuario } from '../../usuario/entities/usuario.entity';
 
@@ -7,16 +6,17 @@ export class Venta {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  // ✅ Usar timestamptz (con zona) y default NOW()
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   fecha: Date;
 
   @Column()
   producto: string;
 
   @Column()
-  tipo: string; // 'Zapato' o 'Ropa'
+  tipo: string; // 'Zapato' | 'Ropa' | 'Bolso'
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   color: string;
 
   @Column()

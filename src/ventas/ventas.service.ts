@@ -1,4 +1,3 @@
-// ventas.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -28,13 +27,11 @@ function normTipo(t: string | TipoProducto): TipoProducto {
   throw new BadRequestException('Tipo de producto inválido');
 }
 
-// ✅ util: convierte string/Date a Date y valida
-function ensureDate(d: string | Date | undefined, field = 'fecha'): Date {
-  if (!d) throw new BadRequestException(`${field} es obligatoria`);
+// ✅ Fecha opcional: si viene la usamos; si no, dejamos que la DB ponga CURRENT_TIMESTAMP
+function parseOptionalDate(d?: string | Date, field = 'fecha'): Date | undefined {
+  if (d == null) return undefined;
   const dt = new Date(d);
-  if (isNaN(dt.getTime())) {
-    throw new BadRequestException(`${field} inválida`);
-  }
+  if (isNaN(dt.getTime())) throw new BadRequestException(`${field} inválida`);
   return dt;
 }
 
@@ -73,7 +70,6 @@ export class VentasService {
       if (!zapato) throw new NotFoundException('Zapato no encontrado');
 
       dto.nombre_producto = zapato.nombre;
-      // dto.color opcional para zapato (si aplica)
 
     } else if (tipo === TipoProducto.ROPA) {
       if (!dto.nombre_producto || !dto.color || !dto.talla) {
@@ -110,15 +106,15 @@ export class VentasService {
       throw new BadRequestException('Tipo de producto inválido');
     }
 
-    // ⬇️⬇️ CAMBIO CLAVE: usar la fecha que viene del frontend
-    const fecha = ensureDate(dto.fecha, 'fecha');
+    const fecha = parseOptionalDate(dto.fecha, 'fecha');
 
+    // ⚠️ Importante: si 'fecha' es undefined, no la seteamos para que DB aplique DEFAULT
     const venta = this.ventaRepo.create({
-      fecha, // <-- antes: undefined (para default). Ahora guardamos la del front.
+      ...(fecha ? { fecha } : {}),
       producto: dto.nombre_producto!,
       tipo,
-      color: dto.color ?? null as any,
-      talla: dto.talla ?? '', // entity no-null; para bolso guardamos ''
+      color: (dto.color ?? null) as any,
+      talla: dto.talla ?? '',
       cantidad: 1,
       precio: dto.precio,
       usuario,
@@ -148,10 +144,9 @@ export class VentasService {
       const tipoNuevo = dto.tipo ? normTipo(dto.tipo) : normTipo(venta.tipo);
       const ventaActualizada: Venta = { ...venta };
 
-      // (Opcional) Fecha editable: si tu UpdateVentaDto la permite
-      if ((dto as any).fecha) {
-        ventaActualizada.fecha = ensureDate((dto as any).fecha, 'fecha');
-      }
+      // Fecha editable (si viene)
+      const maybeFecha = parseOptionalDate((dto as any).fecha, 'fecha');
+      if (maybeFecha) ventaActualizada.fecha = maybeFecha;
 
       // Usuario
       if (dto.usuario_id != null) {
@@ -184,7 +179,7 @@ export class VentasService {
 
         ventaActualizada.tipo = tipoNuevo;
         ventaActualizada.producto = z.nombre;
-        ventaActualizada.color = dto.color ?? null as any;
+        ventaActualizada.color = (dto.color ?? null) as any;
         ventaActualizada.talla = talla;
 
       } else if (tipoNuevo === TipoProducto.ROPA) {
@@ -195,7 +190,7 @@ export class VentasService {
           throw new BadRequestException('nombre_producto, color y talla son obligatorios para tipo ropa');
         }
         const tr = await trRepo.findOne({
-          where: { ropa_nombre: nombre, ropa_color: color, talla },
+          where: { ropa_nombre: nombre, ropa_color: color as any, talla },
         });
         if (!tr) throw new NotFoundException('Talla de ropa no encontrada');
         if (tr.cantidad <= 0) throw new BadRequestException('Sin stock disponible');
@@ -251,14 +246,10 @@ export class VentasService {
   }
 
   async findByDateRange(start: Date, end: Date): Promise<Venta[]> {
-    // ✅ Incluye el día completo del 'end'
-    const s = new Date(start);
-    s.setHours(0, 0, 0, 0);
-    const e = new Date(end);
-    e.setHours(23, 59, 59, 999);
-
+    // ✅ Confiamos en que el front ya manda límites en UTC correctos para el día Bogotá.
+    // No volvemos a mutar con setHours (evita reinterpretación por TZ del server).
     return this.ventaRepo.find({
-      where: { fecha: Between(s, e) },
+      where: { fecha: Between(start, end) },
       order: { fecha: 'DESC' },
     });
   }
@@ -266,19 +257,11 @@ export class VentasService {
   async calcularGanancias(start?: Date, end?: Date): Promise<number> {
     const where: any = {};
     if (start && end) {
-      const s = new Date(start);
-      s.setHours(0, 0, 0, 0);
-      const e = new Date(end);
-      e.setHours(23, 59, 59, 999);
-      where.fecha = Between(s, e);
+      where.fecha = Between(start, end);
     } else if (start) {
-      const s = new Date(start);
-      s.setHours(0, 0, 0, 0);
-      where.fecha = MoreThanOrEqual(s);
+      where.fecha = MoreThanOrEqual(start);
     } else if (end) {
-      const e = new Date(end);
-      e.setHours(23, 59, 59, 999);
-      where.fecha = LessThanOrEqual(e);
+      where.fecha = LessThanOrEqual(end);
     }
 
     const ventas = await this.ventaRepo.find({ where });
@@ -309,7 +292,7 @@ export class VentasService {
 
     } else if (tipo === TipoProducto.ROPA) {
       const tr = await repos.trRepo.findOne({
-        where: { ropa_nombre: venta.producto, ropa_color: venta.color, talla: venta.talla },
+        where: { ropa_nombre: venta.producto, ropa_color: venta.color as any, talla: venta.talla },
       });
       if (!tr) throw new NotFoundException('Talla de ropa no encontrada');
       tr.cantidad += 1;
