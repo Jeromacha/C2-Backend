@@ -10,16 +10,20 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
-      transformOptions: { enableImplicitConversion: true }, // 👈 Esto es clave
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // ✅ Permitir CORS desde el frontend en localhost:3000
+  // ✅ Permitir CORS desde tu dominio en producción y también desde localhost (para pruebas)
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'https://www.inventarioc2.com',
+    ],
+    credentials: true,
   });
 
-  // ✅ Cambiar puerto del backend a 3001
-  await app.listen(3001);
+  // ⚠️ En Render, el puerto lo define la variable de entorno PORT
+  await app.listen(process.env.PORT || 3001);
 }
 bootstrap();
