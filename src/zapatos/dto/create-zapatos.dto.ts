@@ -9,12 +9,12 @@ export class CreateZapatoDto {
   nombre: string;
 
   @IsString()
-  @IsNotEmpty()
-  ubicacion: string;
+  @IsOptional()
+  ubicacion?: string;
 
   @IsString()
-  @IsNotEmpty()
-  imagen_url: string;
+  @IsOptional()
+  imagen_url?: string;
 
   @IsNumber()
   precio: number;
