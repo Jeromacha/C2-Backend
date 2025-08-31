@@ -22,28 +22,20 @@ import { Bolso } from '../bolsos/entities/bolso.entity';
 function normTipo(t: string | TipoProducto): TipoProducto {
   const s = String(t).toLowerCase();
   if (s === 'zapato') return TipoProducto.ZAPATO;
-  if (s === 'ropa') return TipoProducto.ROPA;
-  if (s === 'bolso') return TipoProducto.BOLSO;
+  if (s === 'ropa')   return TipoProducto.ROPA;
+  if (s === 'bolso')  return TipoProducto.BOLSO;
   throw new BadRequestException('Tipo de producto inválido');
-}
-
-// ✅ Fecha opcional: si viene la usamos; si no, dejamos que la DB ponga CURRENT_TIMESTAMP
-function parseOptionalDate(d?: string | Date, field = 'fecha'): Date | undefined {
-  if (d == null) return undefined;
-  const dt = new Date(d);
-  if (isNaN(dt.getTime())) throw new BadRequestException(`${field} inválida`);
-  return dt;
 }
 
 @Injectable()
 export class VentasService {
   constructor(
-    @InjectRepository(Venta)   private readonly ventaRepo: Repository<Venta>,
-    @InjectRepository(Usuario) private readonly usuarioRepo: Repository<Usuario>,
-    @InjectRepository(Talla)   private readonly tallaZapatoRepo: Repository<Talla>,
+    @InjectRepository(Venta)     private readonly ventaRepo: Repository<Venta>,
+    @InjectRepository(Usuario)   private readonly usuarioRepo: Repository<Usuario>,
+    @InjectRepository(Talla)     private readonly tallaZapatoRepo: Repository<Talla>,
     @InjectRepository(TallaRopa) private readonly tallaRopaRepo: Repository<TallaRopa>,
-    @InjectRepository(Zapato)  private readonly zapatoRepo: Repository<Zapato>,
-    @InjectRepository(Bolso)   private readonly bolsoRepo: Repository<Bolso>,
+    @InjectRepository(Zapato)    private readonly zapatoRepo: Repository<Zapato>,
+    @InjectRepository(Bolso)     private readonly bolsoRepo: Repository<Bolso>,
   ) {}
 
   // ---------- CREATE ----------
@@ -106,11 +98,8 @@ export class VentasService {
       throw new BadRequestException('Tipo de producto inválido');
     }
 
-    const fecha = parseOptionalDate(dto.fecha, 'fecha');
-
-    // ⚠️ Importante: si 'fecha' es undefined, no la seteamos para que DB aplique DEFAULT
+    // ⚠️ No seteamos 'fecha': la DB (CreateDateColumn) pone NOW() con hora/minutos/segundos
     const venta = this.ventaRepo.create({
-      ...(fecha ? { fecha } : {}),
       producto: dto.nombre_producto!,
       tipo,
       color: (dto.color ?? null) as any,
@@ -131,22 +120,18 @@ export class VentasService {
 
     return await this.ventaRepo.manager.transaction(async (em) => {
       const ventaRepo = em.getRepository(Venta);
-      const tzRepo   = em.getRepository(Talla);
-      const trRepo   = em.getRepository(TallaRopa);
-      const zapRepo  = em.getRepository(Zapato);
-      const bolRepo  = em.getRepository(Bolso);
-      const usrRepo  = em.getRepository(Usuario);
+      const tzRepo    = em.getRepository(Talla);
+      const trRepo    = em.getRepository(TallaRopa);
+      const zapRepo   = em.getRepository(Zapato);
+      const bolRepo   = em.getRepository(Bolso);
+      const usrRepo   = em.getRepository(Usuario);
 
-      // 1) Revertir stock del registro viejo
+      // 1) Revertir stock de la venta anterior
       await this.revertirStockDeVenta(venta, { tzRepo, trRepo, zapRepo, bolRepo });
 
-      // 2) Construir nueva venta y descontar stock
+      // 2) Aplicar cambios + descontar stock del nuevo artículo
       const tipoNuevo = dto.tipo ? normTipo(dto.tipo) : normTipo(venta.tipo);
       const ventaActualizada: Venta = { ...venta };
-
-      // Fecha editable (si viene)
-      const maybeFecha = parseOptionalDate((dto as any).fecha, 'fecha');
-      if (maybeFecha) ventaActualizada.fecha = maybeFecha;
 
       // Usuario
       if (dto.usuario_id != null) {
@@ -159,7 +144,7 @@ export class VentasService {
       // Precio
       if (dto.precio != null) ventaActualizada.precio = dto.precio;
 
-      // Redefinir artículo según tipo (igual que en create)
+      // Redefinir artículo según tipo
       if (tipoNuevo === TipoProducto.ZAPATO) {
         const zapatoId = dto.zapato_id;
         const talla = dto.talla ?? venta.talla;
@@ -230,10 +215,10 @@ export class VentasService {
 
     await this.ventaRepo.manager.transaction(async (em) => {
       const ventaRepo = em.getRepository(Venta);
-      const tzRepo   = em.getRepository(Talla);
-      const trRepo   = em.getRepository(TallaRopa);
-      const zapRepo  = em.getRepository(Zapato);
-      const bolRepo  = em.getRepository(Bolso);
+      const tzRepo    = em.getRepository(Talla);
+      const trRepo    = em.getRepository(TallaRopa);
+      const zapRepo   = em.getRepository(Zapato);
+      const bolRepo   = em.getRepository(Bolso);
 
       await this.revertirStockDeVenta(venta, { tzRepo, trRepo, zapRepo, bolRepo });
       await ventaRepo.delete(id);
@@ -245,9 +230,8 @@ export class VentasService {
     return this.ventaRepo.find({ order: { fecha: 'DESC' } });
   }
 
+  // Igual que devoluciones: el front manda start/end con -05:00 y aquí no tocamos horas
   async findByDateRange(start: Date, end: Date): Promise<Venta[]> {
-    // ✅ Confiamos en que el front ya manda límites en UTC correctos para el día Bogotá.
-    // No volvemos a mutar con setHours (evita reinterpretación por TZ del server).
     return this.ventaRepo.find({
       where: { fecha: Between(start, end) },
       order: { fecha: 'DESC' },

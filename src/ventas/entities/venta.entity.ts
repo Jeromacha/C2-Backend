@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Usuario } from '../../usuario/entities/usuario.entity';
 
 @Entity({ name: 'ventas' })
@@ -6,15 +6,15 @@ export class Venta {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // ✅ Usar timestamptz (con zona) y default NOW()
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  // Igual que devoluciones: DB pone timestamp con zona y hora real
+  @CreateDateColumn({ type: 'timestamptz' })
   fecha: Date;
 
   @Column()
   producto: string;
 
   @Column()
-  tipo: string; // 'Zapato' | 'Ropa' | 'Bolso'
+  tipo: string; // 'zapato' | 'ropa' | 'bolso'
 
   @Column({ nullable: true })
   color: string;
@@ -25,7 +25,7 @@ export class Venta {
   @Column()
   cantidad: number;
 
-  @Column('decimal')
+  @Column('numeric')
   precio: number;
 
   @ManyToOne(() => Usuario, { eager: true })

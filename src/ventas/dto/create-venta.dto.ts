@@ -1,19 +1,16 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsISO8601 } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export enum TipoProducto {
   ZAPATO = 'zapato',
-  ROPA = 'ropa',
-  BOLSO = 'bolso',
+  ROPA   = 'ropa',
+  BOLSO  = 'bolso',
 }
 
 export class CreateVentaDto {
   @IsEnum(TipoProducto)
   tipo: TipoProducto;
 
-  // NUEVO: fecha de la venta (YYYY-MM-DD o ISO8601)
-  @IsISO8601({ strict: false }, { message: 'fecha debe ser una fecha válida (YYYY-MM-DD o ISO8601)' })
-  @IsNotEmpty()
-  fecha: string;
+  // ⚠️ SIN fecha: la pone la DB (como en devoluciones)
 
   @IsOptional()
   @IsNumber()
@@ -29,7 +26,7 @@ export class CreateVentaDto {
 
   @IsOptional()
   @IsString()
-  talla?: string; // solo ropa/zapato
+  talla?: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -39,7 +36,6 @@ export class CreateVentaDto {
   @IsNotEmpty()
   usuario_id: number;
 
-  // Nuevo para bolso
   @IsOptional()
   @IsString()
   bolso_id?: string;
