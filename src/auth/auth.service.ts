@@ -1,28 +1,34 @@
+// src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Usuario } from '../usuario/entities/usuario.entity';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { UsuariosService } from '../usuario/usuarios.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(Usuario)
-    private readonly userRepo: Repository<Usuario>,
+    private readonly usuariosService: UsuariosService,
     private readonly jwtService: JwtService,
   ) {}
 
-  async validarCredenciales(nombre: string, contraseña: string) {
-    const usuario = await this.userRepo.findOne({ where: { nombre } });
-
-    if (!usuario || !(await bcrypt.compare(contraseña, usuario.contraseña))) {
+  async login(nombre: string, contraseña: string) {
+    const user = await this.usuariosService.findOneByNombre(nombre);
+    if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const payload = { sub: usuario.id, nombre: usuario.nombre, rol: usuario.rol };
-    const token = this.jwtService.sign(payload);
+    const ok = await bcrypt.compare(contraseña, user.contraseña);
+    if (!ok) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
 
-    return { access_token: token };
+    // ⬇️ Bloquea login si está inactivo
+    if (user.activo === false) {
+      throw new UnauthorizedException('Usuario inactivo');
+    }
+
+    const payload = { sub: user.id, nombre: user.nombre, rol: user.rol };
+    const access_token = await this.jwtService.signAsync(payload);
+    return { access_token };
   }
 }

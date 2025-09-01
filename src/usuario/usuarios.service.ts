@@ -54,6 +54,10 @@ export class UsuariosService {
     usuario.activo = !!activo;
     return this.usuarioRepo.save(usuario);
   }
+// src/usuarios/usuarios.service.ts
+async findOneById(id: number) {
+  return this.usuarioRepo.findOne({ where: { id } });
+}
 
   async delete(id: number): Promise<void> {
     try {
