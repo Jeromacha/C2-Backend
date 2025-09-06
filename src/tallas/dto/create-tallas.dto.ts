@@ -1,9 +1,10 @@
-// src/tallas/dto/create-talla.dto.ts
-import { IsInt, IsPositive, Min } from 'class-validator';
+import { IsNumber, IsPositive, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateTallaDto {
+  // Permitimos medios puntos (ej: 38.5), por eso IsNumber.
   @Type(() => Number)
+  @IsNumber()
   @IsPositive()
   talla: number;
 

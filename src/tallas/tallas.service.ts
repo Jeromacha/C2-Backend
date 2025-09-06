@@ -13,9 +13,11 @@ export class TallasService {
   ) {}
 
   async create(createTallaDto: CreateTallaDto): Promise<Talla> {
-    const existente = await this.tallaRepository.findOneBy({
-      talla: createTallaDto.talla,
-      zapato_id: createTallaDto.zapato_id,
+    const existente = await this.tallaRepository.findOne({
+      where: {
+        talla: createTallaDto.talla,
+        zapato_id: createTallaDto.zapato_id,
+      },
     });
 
     if (existente) {
